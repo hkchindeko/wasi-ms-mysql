@@ -1,0 +1,15 @@
+[package]
+name = "wasi-ms-mysql"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.68"
+hyper_wasi = { version = "0.15.0", features = ["full"] }
+mysql_async_wasi = "0.30.1"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.91"
+tokio_wasi = { version = "1.23.0", features = ["io-util", "fs", "net", "time", "rt", "macros"] }
+url = "2.3.1"
