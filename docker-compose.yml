@@ -6,7 +6,7 @@ services:
     volumes:
       - ./client:/usr/share/nginx/html
   server:
-    image: demo-microservice
+    image: wasi-ms-order
     platform: wasi/wasm
     build:
       context: .
