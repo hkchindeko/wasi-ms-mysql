@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 fn get_url() -> String {
-    if let Ok(url) = std::env::var("DATBASE_URL") {
+    if let Ok(url) = std::env::var("DATABASE_URL") {
         let opts = Opts::from_url(&url).expect("DATABASE_URL invalide");
         if opts
             .db_name()
