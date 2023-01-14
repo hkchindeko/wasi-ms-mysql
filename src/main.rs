@@ -30,7 +30,7 @@ struct Order {
     product_id: i32,
     quantity: i32,
     amount: f32,
-    shipping: i32,
+    shipping: f32,
     tax: f32,
     shipping_address: String,
 }
@@ -95,7 +95,7 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
             let mut conn = pool.get_conn().await.unwrap();
 
             let byte_stream = hyper::body::to_bytes(req).await?;
-            let order: Order = serder_json::from_slice(&byte_stream).unwrap();
+            let order: Order = serde_json::from_slice(&byte_stream).unwrap();
 
             "INSERT INTO orders (order_id, product_id, quantity, amount, shipping, tax, shipping_address) VALUES (:order_id, :product_id, :quantity, :amount, :shipping, :tax, :shipping_address)"
                 .with(params! {
@@ -183,7 +183,7 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
                 ).await?;
 
             drop(conn);
-            Ok(response_build(serde_json::to_string(&order)?.as_str()))
+            Ok(response_build(serde_json::to_string(&orders)?.as_str()))
             // Ok(Response::new(Body::from(serde_json::to_string(&orders)?)))
         },
 
@@ -191,7 +191,7 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
             let mut conn = pool.get_conn().await.unwrap();
 
             let params: HashMap<String, String> = req.uri().query().map(|v| {
-                url::form_urlencoded::parse(v.as_byte()).into_owned().collect()
+                url::form_urlencoded::parse(v.as_bytes()).into_owned().collect()
             }).unwrap_or_else(HashMap::new);
             let order_id = params.get("id");
 
@@ -215,7 +215,7 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let opts = Opts::from_url(&*gett_url()).unwrap();
+    let opts = Opts::from_url(&*get_url()).unwrap();
     let builder = OptsBuilder::from_opts(opts);
     // The connection pool will have a min of 5 and max of 10 connections.
     let constraints = PoolConstraints::new(5, 10).unwrap();
@@ -226,13 +226,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let make_svc = make_service_fn(|_| {
         let pool = pool.clone();
         async move {
-            Ok::<_, Infallible>(service_fn(move |_| {
+            Ok::<_, Infallible>(service_fn(move |req| {
                 let pool = pool.clone();
                 handle_request(req, pool)
             }))
         }
     });
-    let server = Server::bind(&addr).serve((make_svc));
+    let server = Server::bind(&addr).serve(make_svc);
     if let Err(e) = server.await {
         eprintln!("server error: {}", e)
     }
